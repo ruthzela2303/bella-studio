@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Clienta - Bella Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=4">
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <style>
@@ -13,6 +13,22 @@
 .modal-bg.show{display:flex}
 .modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:90%;max-width:380px}
 .serv-card{cursor:pointer;transition:.2s}.serv-card:hover{transform:scale(1.02);border-color:var(--pink)}
+.bar-bg{background:rgba(255,255,255,.15);height:14px;border-radius:20px;overflow:hidden;margin:10px 0}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--pink),#ff7eb3);width:0%;transition:width.6s ease}
+.badge-gratis{background:var(--pink);color:#fff;padding:6px 12px;border-radius:20px;font-weight:800;font-size:13px;display:inline-block;margin-top:8px}
+@media(max-width:768px){
+ .app{flex-direction:column}
+ .sidebar{width:100%;display:flex;flex-wrap:wrap;gap:6px;padding:12px;position:sticky;top:0;z-index:10}
+ .sidebar a{white-space:nowrap;font-size:13px;padding:8px 12px;border-radius:20px;background:var(--card)}
+ .sidebar a.active{background:var(--pink);color:#fff}
+ .grid2{grid-template-columns:1fr!important}
+ .grid4{grid-template-columns:1fr 1fr!important}
+  table thead{display:none}
+  table, tbody, tr, td{display:block;width:100%}
+  table tr{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;padding:10px}
+  table td{border:none;padding:4px 0;display:flex;justify-content:space-between;font-size:13px}
+  table td::before{content:attr(data-label);font-weight:700;opacity:.6}
+}
 </style>
 </head>
 <body data-theme="dark">
@@ -28,12 +44,16 @@
 <div class="main">
   <div id="view-inicio" class="view active">
     <div class="header"><h2>Hola <span id="nombreCli"></span> 💖</h2></div>
-    <div class="grid2">
+    <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="card"><h4>Tu próxima cita</h4><h3 id="nextCita" class="pink">Cargando...</h3><div class="small" id="nextDet"></div><button class="btn btn-pink" style="margin-top:10px" onclick="showViewCli('reservar')">Reservar ahora</button></div>
-      <div class="card"><h4>✨ Mis Puntos</h4><h2 class="pink" id="puntosCli">0 pts</h2><div class="small" id="puntosInfo">Cargando...</div></div>
+      <div class="card"><h4>✨ Mis Puntos</h4><h2 class="pink" id="puntosCli">0 pts</h2><div class="small" id="puntosInfo">Cargando...</div>
+        <div class="bar-bg"><div id="barFill" class="bar-fill"></div></div>
+        <div class="small" id="txtProgreso">0 / 2000</div>
+        <div id="txtGratis"></div>
+      </div>
     </div>
   </div>
-  <div id="view-reservar" class="view"><div class="header"><h2>💅 Reserva tu servicio</h2></div><div class="grid4" id="serviciosList"></div></div>
+  <div id="view-reservar" class="view"><div class="header"><h2>💅 Reserva tu servicio</h2></div><div class="grid4" id="serviciosList" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px"></div></div>
   <div id="view-mis" class="view"><div class="header"><h2>📅 Mis Citas</h2></div><div class="card"><table><thead><tr><th>Fecha</th><th>Hora</th><th>Servicio</th><th>Precio</th><th>Estado</th></tr></thead><tbody id="tablaMisCitas"></tbody></table></div></div>
 </div>
 </div>
@@ -64,6 +84,21 @@ async function confirmarReserva(){
  showViewCli('mis');
  renderCli();
 }
+function pintarPuntos(puntos, canjeados, mult){
+  const totalGratis = Math.floor(puntos/2000);
+  const disponibles = totalGratis - (canjeados||0);
+  const resto = puntos % 2000;
+  const pct = (resto/2000)*100;
+  document.getElementById('puntosCli').innerText = puntos + ' pts';
+  document.getElementById('puntosInfo').innerText = `S/1 = ${mult} pts`;
+  document.getElementById('barFill').style.width = pct + '%';
+  document.getElementById('txtProgreso').innerText = `${resto} / 2000 pts para tu próxima gratis`;
+  let html='';
+  if(disponibles>0) html+=`<span class="badge-gratis">🎉 ${disponibles} Atención Gratis</span><div class="small" style="margin-top:6px">¡Canjéalos en tu próxima visita!</div>`;
+  else html+=`<div class="small">Te faltan ${2000-resto} pts para tu gratis</div>`;
+  if(totalGratis>0) html+=`<div class="small" style="margin-top:6px;opacity:.7">${canjeados||0} canjeadas • ${totalGratis} ganadas en total</div>`;
+  document.getElementById('txtGratis').innerHTML=html;
+}
 async function renderCli(){
  if(localStorage.getItem('role')!=='clienta') return window.location.href='index.html';
  const email=(localStorage.getItem('userEmail')||'').toLowerCase();
@@ -85,21 +120,19 @@ async function renderCli(){
      let citas = [];
      misSnap.forEach(doc=> citas.push(doc.data()));
      citas.sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
-     citas.forEach(c=>{ tm.innerHTML+=`<tr><td>${c.fecha}</td><td>${c.hora}</td><td><span class="badge badge-pink">${c.servicio}</span></td><td>S/ ${c.precio}</td><td><span class="badge ${c.estado==='Atendida'?'badge-green':'badge-cyan'}">${c.estado}</span></td></tr>`; });
+     citas.forEach(c=>{ tm.innerHTML+=`<tr><td data-label="Fecha">${c.fecha}</td><td data-label="Hora">${c.hora}</td><td data-label="Servicio"><span class="badge badge-pink">${c.servicio}</span></td><td data-label="Precio">S/ ${c.precio}</td><td data-label="Estado"><span class="badge ${c.estado==='Atendida'?'badge-green':'badge-cyan'}">${c.estado}</span></td></tr>`; });
      const prox = citas[citas.length-1];
      document.getElementById('nextCita').innerText=prox.servicio+' - '+prox.fecha;
      document.getElementById('nextDet').innerText=prox.hora + ' - ' + prox.estado;
    }
  } catch(e){ console.error(e); }
 
- // PUNTOS - FIX SOLO ESTO, SIN CAMBIAR COLORES
  try{
    const confDoc = await db.collection('config').doc('puntos').get();
    const mult = confDoc.exists? confDoc.data().valor : 10;
-   document.getElementById('puntosInfo').innerText = `S/1 = ${mult} pts - Canjea en tu próxima cita`;
    db.collection('clientes').doc(email).onSnapshot(doc=>{
-     if(doc.exists) document.getElementById('puntosCli').innerText = (doc.data().puntos||0) + ' pts';
-     else document.getElementById('puntosCli').innerText = '0 pts';
+     if(doc.exists){ const d=doc.data(); pintarPuntos(d.puntos||0, d.canjeados||0, mult); }
+     else { pintarPuntos(0,0,mult); }
    });
  }catch(e){ console.error(e); }
 }
