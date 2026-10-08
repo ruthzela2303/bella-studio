@@ -34,7 +34,7 @@ function showLogin(){
  document.getElementById('form-register-clienta').style.display='none';
 }
 
-// DUEÑA - ahora con Firebase
+// DUEÑA
 async function loginDuena(){
  const email=document.getElementById('emailDuena').value.trim().toLowerCase();
  const pass=document.getElementById('passDuena').value.trim();
@@ -45,8 +45,6 @@ async function loginDuena(){
  }catch(e){
   if(e.code==='auth/user-not-found'){
     await auth.createUserWithEmailAndPassword(email, pass);
-  }else if(e.code!=='auth/wrong-password' && e.code!=='auth/invalid-credential'){
-    // si ya existe pero clave mal, intenta crear igual
   }
  }
  localStorage.setItem('role','duena');
@@ -54,20 +52,22 @@ async function loginDuena(){
  window.location.href='duena.html';
 }
 
-// CLIENTA REGISTRO - guarda en Firebase
+// CLIENTA REGISTRO - FIX: guarda en 'clientes' que es donde lee duena.html
 async function registerClienta(){
  const nombre=document.getElementById('regNombre').value.trim();
  const email=document.getElementById('regEmail').value.trim().toLowerCase();
  const pass=document.getElementById('regPass').value.trim();
- if(!nombre || !email.includes('@') || pass.length<5){ alert('Completa todo bien'); return; }
+ if(!nombre ||!email.includes('@') || pass.length<5){ alert('Completa todo bien'); return; }
  try{
    await auth.createUserWithEmailAndPassword(email, pass);
-   await db.collection('clientas').doc(email).set({
+   // Guarda en COLECCION CORRECTA: clientes
+   await db.collection('clientes').doc(email).set({
      nombre: nombre,
      email: email,
      puntos: 0,
+     canjeados: 0,
      creado: firebase.firestore.FieldValue.serverTimestamp()
-   });
+   }, {merge:true});
    localStorage.setItem('role','clienta');
    localStorage.setItem('userName', nombre);
    localStorage.setItem('userEmail', email);
@@ -77,7 +77,7 @@ async function registerClienta(){
  }
 }
 
-// CLIENTA LOGIN - lee de Firebase
+// CLIENTA LOGIN - FIX: lee de 'clientes' primero
 async function loginClienta(){
  const email=document.getElementById('emailClienta').value.trim().toLowerCase();
  const pass=document.getElementById('passClienta').value.trim();
@@ -85,14 +85,18 @@ async function loginClienta(){
  if(email===DUENA_EMAIL){ alert('Entra por Dueña'); return; }
  try{
    await auth.signInWithEmailAndPassword(email, pass);
-   const doc = await db.collection('clientas').doc(email).get();
-   if(!doc.exists){ alert('Cuenta no encontrada en base de datos'); return; }
+   let doc = await db.collection('clientes').doc(email).get();
+   if(!doc.exists){
+     doc = await db.collection('clientas').doc(email).get(); // fallback por si es cuenta vieja
+   }
+   if(!doc.exists){ alert('Cuenta no encontrada, regístrate de nuevo'); return; }
    const user = doc.data();
    localStorage.setItem('role','clienta');
-   localStorage.setItem('userName', user.nombre);
-   localStorage.setItem('userEmail', user.email);
+   localStorage.setItem('userName', user.nombre || email.split('@')[0]);
+   localStorage.setItem('userEmail', user.email || email);
    window.location.href='clienta.html';
  }catch(e){
+   console.error(e);
    alert('Correo o contraseña incorrectos');
  }
 }
