@@ -21,24 +21,24 @@
 
     <div id="login-duena">
       <p class="small center">Acceso exclusivo dueña</p>
-      <input id="emailDuena" type="email" placeholder="ej: admin@bellastudio.com" value="admin@bellastudio.com">
-      <input id="passDuena" type="password" placeholder="•••••••" autocomplete="new-password">
+      <input id="emailDuena" type="email" value="admin@bellastudio.com" autocomplete="username">
+      <input id="passDuena" type="password" placeholder="dueña123" autocomplete="off">
       <button class="btn btn-cyan full" onclick="loginDuena()">Entrar como Dueña</button>
     </div>
 
     <div id="login-clienta" style="display:none">
       <div id="form-login-clienta">
         <p class="small center">Ingreso clientas</p>
-        <input id="emailClienta" type="email" placeholder="ej: tu.nombre@gmail.com">
-        <input id="passClienta" type="password" placeholder="•••••••">
+        <input id="emailClienta" type="email" placeholder="ej: tu.nombre@gmail.com" autocomplete="off">
+        <input id="passClienta" type="password" placeholder="•••••••" autocomplete="off">
         <button class="btn btn-pink full" onclick="loginClienta()">Entrar</button>
         <p class="small center" style="margin-top:12px">¿Eres nueva? <a href="#" onclick="showRegister()" style="color:var(--pink);font-weight:700">Regístrate aquí</a></p>
       </div>
       <div id="form-register-clienta" style="display:none">
         <p class="small center">Crear cuenta nueva</p>
-        <input id="regNombre" type="text" placeholder="ej: María López">
-        <input id="regEmail" type="email" placeholder="ej: maria.lopez@gmail.com">
-        <input id="regPass" type="password" placeholder="Crea contraseña - mín. 5">
+        <input id="regNombre" type="text" placeholder="ej: María López" autocomplete="off">
+        <input id="regEmail" type="email" placeholder="ej: maria.lopez@gmail.com" autocomplete="off">
+        <input id="regPass" type="password" placeholder="Crea contraseña - mín. 5" autocomplete="off">
         <button class="btn btn-pink full" onclick="registerClienta()">Crear Cuenta</button>
         <p class="small center" style="margin-top:12px"><a href="#" onclick="showLogin()" style="color:var(--muted)">← Ya tengo cuenta</a></p>
       </div>
