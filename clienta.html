@@ -51,28 +51,28 @@ const servicios = [
  {nombre:'Lifting + Tinte', precio:80, tiempo:'60 min', emoji:'👀'},
 ];
 let selectedServ=null;
-function showViewCli(name){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active')); document.getElementById('view-'+name).classList.add('active'); document.getElementById('nav-'+name).classList.add('active'); }
+function showViewCli(name){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active')); document.getElementById('view-'+name).classList.add('active'); document.getElementById('nav-'+name).classList.add('active'); renderCli(); }
 function openReserva(i){ selectedServ=servicios[i]; document.getElementById('resServNombre').innerText=selectedServ.emoji+' '+selectedServ.nombre; document.getElementById('resServPrecio').innerText='S/ '+selectedServ.precio+' - '+selectedServ.tiempo; document.getElementById('resFecha').valueAsDate=new Date(); document.getElementById('modalReserva').classList.add('show'); }
 function closeModalCli(){document.getElementById('modalReserva').classList.remove('show')}
 async function confirmarReserva(){
  const fecha=document.getElementById('resFecha').value, hora=document.getElementById('resHora').value;
  if(!fecha||!hora) return alert('Elige fecha y hora');
  const email=localStorage.getItem('userEmail'), nombre=localStorage.getItem('userName');
- await db.collection('citas').add({hora, clienta:nombre, servicio:selectedServ.nombre, precio:selectedServ.precio, estado:'Pendiente', fecha, email: email.toLowerCase()});
+ await db.collection('citas').add({hora, clienta:nombre, servicio:selectedServ.nombre, precio:selectedServ.precio, estado:'Pendiente', fecha, email});
  closeModalCli();
- alert(`¡Reserva guardada! 💖`);
+ alert(¡Reserva guardada en Firebase! 💖);
  showViewCli('mis');
 }
 async function renderCli(){
- const email=localStorage.getItem('userEmail');
- const nombre=localStorage.getItem('userName');
- if(!email){ document.getElementById('nombreCli').innerText='Clienta'; }
+ if(localStorage.getItem('role')!=='clienta') return window.location.href='index.html';
+ const email=localStorage.getItem('userEmail'), nombre=localStorage.getItem('userName');
  document.getElementById('nombreCli').innerText=nombre || 'Clienta';
- document.getElementById('clientaInfo').innerHTML=`<b>${nombre}</b><br><span style="opacity:.7;font-size:11px">${email}</span>`;
+ document.getElementById('clientaInfo').innerHTML=<b>${nombre}</b><br><span style="opacity:.7;font-size:11px">${email}</span>;
  const sl=document.getElementById('serviciosList'); sl.innerHTML='';
- servicios.forEach((s,i)=>{ sl.innerHTML+=`<div class="card serv-card" onclick="openReserva(${i})"><div style="font-size:28px">${s.emoji}</div><h4 style="margin:8px 0">${s.nombre}</h4><div class="small">${s.tiempo}</div><div class="pink" style="font-weight:800;margin-top:6px">S/ ${s.precio}</div><button class="btn btn-pink full" style="margin-top:10px">Reservar</button></div>`; });
+ servicios.forEach((s,i)=>{ sl.innerHTML+=<div class="card serv-card" onclick="openReserva(${i})"><div style="font-size:28px">${s.emoji}</div><h4 style="margin:8px 0">${s.nombre}</h4><div class="small">${s.tiempo}</div><div class="pink" style="font-weight:800;margin-top:6px">S/ ${s.precio}</div><button class="btn btn-pink full" style="margin-top:10px">Reservar</button></div>; });
+
  try {
-   const misSnap = await db.collection('citas').where('email','==',email.toLowerCase()).get();
+   const misSnap = await db.collection('citas').where('email','==',email).get();
    const tm=document.getElementById('tablaMisCitas'); tm.innerHTML='';
    document.getElementById('misCount').innerText=misSnap.size;
    if(misSnap.empty){
@@ -80,18 +80,28 @@ async function renderCli(){
      document.getElementById('nextCita').innerText='No tienes citas aún';
      document.getElementById('nextDet').innerText='¡Reserva tu primera cita! 💖';
    } else{
-     let citas = []; misSnap.forEach(doc=> citas.push(doc.data())); citas.sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
-     citas.forEach(c=>{ tm.innerHTML+=`<tr><td>${c.fecha}</td><td>${c.hora}</td><td><span class="badge badge-pink">${c.servicio}</span></td><td>S/ ${c.precio}</td><td><span class="badge ${c.estado==='Atendida'?'badge-green':'badge-cyan'}">${c.estado}</span></td></tr>`; });
-     const prox = citas[citas.length-1]; document.getElementById('nextCita').innerText=prox.servicio+' - '+prox.fecha; document.getElementById('nextDet').innerText=prox.hora + ' - ' + prox.estado;
+     let citas = [];
+     misSnap.forEach(doc=> citas.push(doc.data()));
+     citas.sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+     citas.forEach(c=>{ tm.innerHTML+=<tr><td>${c.fecha}</td><td>${c.hora}</td><td><span class="badge badge-pink">${c.servicio}</span></td><td>S/ ${c.precio}</td><td><span class="badge ${c.estado==='Atendida'?'badge-green':'badge-cyan'}">${c.estado}</span></td></tr>; });
+     const prox = citas[citas.length-1];
+     document.getElementById('nextCita').innerText=prox.servicio+' - '+prox.fecha;
+     document.getElementById('nextDet').innerText=prox.hora + ' - ' + prox.estado;
    }
  } catch(e){ console.error(e); }
+
+ // PUNTOS - NUEVO
  try{
    const cliDoc = await db.collection('clientes').doc(email.toLowerCase()).get();
-   document.getElementById('puntosCli').innerText = (cliDoc.exists? (cliDoc.data().puntos||0) : 0) + ' pts';
+   if(cliDoc.exists){
+     document.getElementById('puntosCli').innerText = (cliDoc.data().puntos||0) + ' pts';
+   } else {
+     document.getElementById('puntosCli').innerText = '0 pts';
+   }
    const confDoc = await db.collection('config').doc('puntos').get();
    const mult = confDoc.exists? confDoc.data().valor : 10;
-   document.getElementById('puntosInfo').innerText = `S/1 = ${mult} pts`;
- }catch(e){ console.error(e); }
+   document.getElementById('puntosInfo').innerText = S/1 = ${mult} pts - Canjea en tu próxima cita;
+ }catch(e){ console.error(e); document.getElementById('puntosCli').innerText='Error'; }
 }
 renderCli();
 </script>
