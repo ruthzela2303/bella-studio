@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BELLA STUDIO - Login Real</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body data-theme="dark" class="login-body">
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="logo center">BELLA <span>STUDIO</span><br><small>Nails & Lashes</small></div>
+    
+    <div class="role-tabs">
+      <button class="role-tab active" id="tab-duena" onclick="setRole('duena')">👑 Dueña</button>
+      <button class="role-tab" id="tab-clienta" onclick="setRole('clienta')">💅 Clienta</button>
+    </div>
+
+    <div id="login-duena">
+      <p class="small center">Acceso exclusivo dueña</p>
+      <input id="emailDuena" type="email" placeholder="ej: admin@bellastudio.com" value="admin@bellastudio.com">
+      <input id="passDuena" type="password" placeholder="•••••••" value="dueña123">
+      <button class="btn btn-cyan full" onclick="loginDuena()">Entrar como Dueña</button>
+    </div>
+
+    <div id="login-clienta" style="display:none">
+      <div id="form-login-clienta">
+        <p class="small center">Ingreso clientas</p>
+        <input id="emailClienta" type="email" placeholder="ej: tu.nombre@gmail.com">
+        <input id="passClienta" type="password" placeholder="•••••••">
+        <button class="btn btn-pink full" onclick="loginClienta()">Entrar</button>
+        <p class="small center" style="margin-top:12px">¿Eres nueva? <a href="#" onclick="showRegister()" style="color:var(--pink);font-weight:700">Regístrate aquí</a></p>
+      </div>
+      <div id="form-register-clienta" style="display:none">
+        <p class="small center">Crear cuenta nueva</p>
+        <input id="regNombre" type="text" placeholder="ej: María López">
+        <input id="regEmail" type="email" placeholder="ej: maria.lopez@gmail.com">
+        <input id="regPass" type="password" placeholder="Crea contraseña - mín. 5">
+        <button class="btn btn-pink full" onclick="registerClienta()">Crear Cuenta</button>
+        <p class="small center" style="margin-top:12px"><a href="#" onclick="showLogin()" style="color:var(--muted)">← Ya tengo cuenta</a></p>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:center;gap:8px;margin-top:14px;align-items:center">
+      <div class="small" id="themeLabel">Modo Oscuro</div>
+      <div class="toggle" onclick="toggleTheme()"><div class="toggle-dot"></div></div>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

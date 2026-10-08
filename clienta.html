@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clienta - Bella Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<style>
+.view{display:none}.view.active{display:block}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);justify-content:center;align-items:center;z-index:99}
+.modal-bg.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:90%;max-width:380px}
+.serv-card{cursor:pointer;transition:.2s}.serv-card:hover{transform:scale(1.02);border-color:var(--pink)}
+</style>
+</head>
+<body data-theme="dark">
+<div class="app">
+<div class="sidebar">
+  <div class="logo">BELLA <span>STUDIO</span></div>
+  <div class="small" id="clientaInfo"></div>
+  <a class="active" id="nav-inicio" onclick="showViewCli('inicio')">🏠 Inicio</a>
+  <a id="nav-reservar" onclick="showViewCli('reservar')">💅 Reservar</a>
+  <a id="nav-mis" onclick="showViewCli('mis')">📅 Mis Citas <span id="misCount" class="badge badge-pink">0</span></a>
+  <a href="index.html" onclick="localStorage.clear()">🚪 Salir</a>
+  <div style="margin-top:12px;display:flex;gap:8px;align-items:center"><div class="small">Modo Oscuro</div><div class="toggle" onclick="toggleTheme()"><div class="toggle-dot"></div></div></div>
+</div>
+<div class="main">
+  <div id="view-inicio" class="view active">
+    <div class="header"><h2>Hola <span id="nombreCli"></span> 💖</h2></div>
+    <div class="grid2">
+      <div class="card"><h4>Tu próxima cita</h4><h3 id="nextCita" class="pink">Cargando...</h3><div class="small" id="nextDet"></div><button class="btn btn-pink" style="margin-top:10px" onclick="showViewCli('reservar')">Reservar ahora</button></div>
+      <div class="card"><h4>Bienvenida a Bella Studio 💖</h4><div class="small">Reserva tu servicio favorito, todo se guarda en Firebase.</div></div>
+    </div>
+  </div>
+  <div id="view-reservar" class="view"><div class="header"><h2>💅 Reserva tu servicio</h2></div><div class="grid4" id="serviciosList"></div></div>
+  <div id="view-mis" class="view"><div class="header"><h2>📅 Mis Citas</h2></div><div class="card"><table><thead><tr><th>Fecha</th><th>Hora</th><th>Servicio</th><th>Precio</th><th>Estado</th></tr></thead><tbody id="tablaMisCitas"></tbody></table></div></div>
+</div>
+</div>
+<div id="modalReserva" class="modal-bg" onclick="if(event.target===this) closeModalCli()"><div class="modal"><h3 id="resServNombre"></h3><p class="small" id="resServPrecio"></p><input id="resFecha" type="date"><input id="resHora" type="time" value="10:00"><button class="btn btn-pink full" onclick="confirmarReserva()">Confirmar Reserva</button></div></div>
+<script>
+const firebaseConfig = { apiKey: "AIzaSyCGSVHmsq_kssWtE7TyEIyVfH_KQI8xjeI", authDomain: "bella-c0a0d.firebaseapp.com", projectId: "bella-c0a0d" };
+if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const servicios = [
+ {nombre:'Acrílicas con Diseño', precio:110, tiempo:'90 min', emoji:'💅'},
+ {nombre:'Lashes Volumen', precio:130, tiempo:'120 min', emoji:'👁️'},
+ {nombre:'Gel Semi + Deco', precio:70, tiempo:'60 min', emoji:'✨'},
+ {nombre:'Acrílicas + Lashes Combo', precio:200, tiempo:'180 min', emoji:'💖'},
+ {nombre:'Retoque Acrílicas', precio:65, tiempo:'60 min', emoji:'🔄'},
+ {nombre:'Lifting + Tinte', precio:80, tiempo:'60 min', emoji:'👀'},
+];
+let selectedServ=null;
+function toggleTheme(){ const b=document.body; const isDark=b.getAttribute('data-theme')==='dark'; b.setAttribute('data-theme', isDark?'light':'dark'); }
+function showViewCli(name){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active')); document.getElementById('view-'+name).classList.add('active'); document.getElementById('nav-'+name).classList.add('active'); renderCli(); }
+function openReserva(i){ selectedServ=servicios[i]; document.getElementById('resServNombre').innerText=selectedServ.emoji+' '+selectedServ.nombre; document.getElementById('resServPrecio').innerText='S/ '+selectedServ.precio+' - '+selectedServ.tiempo; document.getElementById('resFecha').valueAsDate=new Date(); document.getElementById('modalReserva').classList.add('show'); }
+function closeModalCli(){document.getElementById('modalReserva').classList.remove('show')}
+async function confirmarReserva(){
+ const fecha=document.getElementById('resFecha').value, hora=document.getElementById('resHora').value;
+ if(!fecha||!hora) return alert('Elige fecha y hora');
+ const email=localStorage.getItem('userEmail'), nombre=localStorage.getItem('userName');
+ await db.collection('citas').add({hora, clienta:nombre, servicio:selectedServ.nombre, precio:selectedServ.precio, estado:'Pendiente', fecha, email});
+ closeModalCli();
+ alert(`¡Reserva guardada en Firebase! 💖`);
+ showViewCli('mis');
+}
+async function renderCli(){
+ if(localStorage.getItem('role')!=='clienta') return window.location.href='index.html';
+ const email=localStorage.getItem('userEmail'), nombre=localStorage.getItem('userName');
+ document.getElementById('nombreCli').innerText=nombre || 'Clienta';
+ document.getElementById('clientaInfo').innerHTML=`<b>${nombre}</b><br><span style="opacity:.7;font-size:11px">${email}</span>`;
+ const sl=document.getElementById('serviciosList'); sl.innerHTML='';
+ servicios.forEach((s,i)=>{ sl.innerHTML+=`<div class="card serv-card" onclick="openReserva(${i})"><div style="font-size:28px">${s.emoji}</div><h4 style="margin:8px 0">${s.nombre}</h4><div class="small">${s.tiempo}</div><div class="pink" style="font-weight:800;margin-top:6px">S/ ${s.precio}</div><button class="btn btn-pink full" style="margin-top:10px">Reservar</button></div>`; });
+
+ try {
+   const misSnap = await db.collection('citas').where('email','==',email).get();
+   const tm=document.getElementById('tablaMisCitas'); tm.innerHTML='';
+   document.getElementById('misCount').innerText=misSnap.size;
+   if(misSnap.empty){
+     tm.innerHTML='<tr><td colspan="5">Aún no tienes citas</td></tr>';
+     document.getElementById('nextCita').innerText='No tienes citas aún';
+     document.getElementById('nextDet').innerText='¡Reserva tu primera cita! 💖';
+   } else{
+     let citas = [];
+     misSnap.forEach(doc=> citas.push(doc.data()));
+     citas.sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+     citas.forEach(c=>{ tm.innerHTML+=`<tr><td>${c.fecha}</td><td>${c.hora}</td><td><span class="badge badge-pink">${c.servicio}</span></td><td>S/ ${c.precio}</td><td><span class="badge ${c.estado==='Atendida'?'badge-green':'badge-cyan'}">${c.estado}</span></td></tr>`; });
+     const prox = citas[citas.length-1];
+     document.getElementById('nextCita').innerText=prox.servicio+' - '+prox.fecha;
+     document.getElementById('nextDet').innerText=prox.hora + ' - ' + prox.estado;
+   }
+ } catch(e){
+   console.error(e);
+   document.getElementById('nextCita').innerText='Error: '+e.message;
+ }
+}
+renderCli();
+</script>
+</body>
+</html>
