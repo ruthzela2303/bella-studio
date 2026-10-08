@@ -1,35 +1,99 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Clienta - Bella Studio</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script><script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clienta - Bella Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <style>
-:root{--bg:#0f0f12;--card:#1c1c20;--border:#2a2a2e;--pink:#ff3d8a;--cyan:#00d4ff;--green:#00ff88;--text:#fff;--small:#9aa0a6}
-body{margin:0;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
-.app{display:flex;min-height:100vh}
-.sidebar{width:230px;background:#151518;border-right:1px solid var(--border);padding:20px}
-.sidebar.logo{font-weight:800;font-size:20px;margin-bottom:20px}.logo span{color:var(--pink)}
-.sidebar a{display:block;padding:10px 12px;border-radius:10px;color:#bbb;text-decoration:none;margin-bottom:6px;cursor:pointer}.sidebar a.active,.sidebar a:hover{background:var(--card);color:#fff}
-.main{flex:1;padding:20px}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.grid4{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
-.pink{color:var(--pink)}.small{font-size:12px;color:var(--small)}
-.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}.btn-pink{background:var(--pink);color:#fff}.btn-cyan{background:var(--cyan);color:#000}.full{width:100%}
-.badge{padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700}.badge-pink{background:#ff3d8a22;color:var(--pink)}.badge-cyan{background:#00d4ff22;color:var(--cyan)}.badge-green{background:#00ff8822;color:var(--green)}
-table{width:100%;border-collapse:collapse}th{color:var(--small);text-align:left;font-size:12px;padding:8px}td{padding:10px 8px;border-top:1px solid var(--border);font-size:13px}
 .view{display:none}.view.active{display:block}
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);justify-content:center;align-items:center;z-index:99}.modal-bg.show{display:flex}.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:90%;max-width:380px}
-input{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:#111;color:#fff;margin-bottom:8px;box-sizing:border-box}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);justify-content:center;align-items:center;z-index:99}
+.modal-bg.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:90%;max-width:380px}
 .serv-card{cursor:pointer;transition:.2s}.serv-card:hover{transform:scale(1.02);border-color:var(--pink)}
-</style></head><body><div class="app"><div class="sidebar"><div class="logo">BELLA <span>STUDIO</span></div><div class="small" id="clientaInfo"></div><a class="active" id="nav-inicio" onclick="showViewCli('inicio')">🏠 Inicio</a><a id="nav-reservar" onclick="showViewCli('reservar')">💅 Reservar</a><a id="nav-mis" onclick="showViewCli('mis')">📅 Mis Citas <span id="misCount" class="badge badge-pink">0</span></a><a href="index.html" onclick="localStorage.clear()">🚪 Salir</a></div><div class="main"><div id="view-inicio" class="view active"><div class="header"><h2>Hola <span id="nombreCli"></span> 💖</h2></div><div class="grid2"><div class="card"><h4>Tu próxima cita</h4><h3 id="nextCita" class="pink">Cargando...</h3><div class="small" id="nextDet"></div><button class="btn btn-pink" style="margin-top:10px" onclick="showViewCli('reservar')">Reservar ahora</button></div><div class="card"><h4>✨ Mis Puntos</h4><h2 class="pink" id="puntosCli">0 pts</h2><div class="small" id="puntosInfo">Cargando...</div></div></div></div><div id="view-reservar" class="view"><div class="header"><h2>💅 Reserva tu servicio</h2></div><div class="grid4" id="serviciosList"></div></div><div id="view-mis" class="view"><div class="header"><h2>📅 Mis Citas</h2></div><div class="card"><table><thead><tr><th>Fecha</th><th>Hora</th><th>Servicio</th><th>Precio</th><th>Estado</th></tr></thead><tbody id="tablaMisCitas"></tbody></table></div></div></div></div><div id="modalReserva" class="modal-bg" onclick="if(event.target===this) closeModalCli()"><div class="modal"><h3 id="resServNombre"></h3><p class="small" id="resServPrecio"></p><input id="resFecha" type="date"><input id="resHora" type="time" value="10:00"><button class="btn btn-pink full" onclick="confirmarReserva()">Confirmar Reserva</button></div></div>
+</style>
+</head>
+<body data-theme="dark">
+<div class="app">
+<div class="sidebar">
+  <div class="logo">BELLA <span>STUDIO</span></div>
+  <div class="small" id="clientaInfo"></div>
+  <a class="active" id="nav-inicio" onclick="showViewCli('inicio')">🏠 Inicio</a>
+  <a id="nav-reservar" onclick="showViewCli('reservar')">💅 Reservar</a>
+  <a id="nav-mis" onclick="showViewCli('mis')">📅 Mis Citas <span id="misCount" class="badge badge-pink">0</span></a>
+  <a href="index.html" onclick="localStorage.clear()">🚪 Salir</a>
+</div>
+<div class="main">
+  <div id="view-inicio" class="view active">
+    <div class="header"><h2>Hola <span id="nombreCli"></span> 💖</h2></div>
+    <div class="grid2">
+      <div class="card"><h4>Tu próxima cita</h4><h3 id="nextCita" class="pink">Cargando...</h3><div class="small" id="nextDet"></div><button class="btn btn-pink" style="margin-top:10px" onclick="showViewCli('reservar')">Reservar ahora</button></div>
+      <div class="card"><h4>✨ Mis Puntos</h4><h2 class="pink" id="puntosCli">0 pts</h2><div class="small" id="puntosInfo">Cargando...</div></div>
+    </div>
+  </div>
+  <div id="view-reservar" class="view"><div class="header"><h2>💅 Reserva tu servicio</h2></div><div class="grid4" id="serviciosList"></div></div>
+  <div id="view-mis" class="view"><div class="header"><h2>📅 Mis Citas</h2></div><div class="card"><table><thead><tr><th>Fecha</th><th>Hora</th><th>Servicio</th><th>Precio</th><th>Estado</th></tr></thead><tbody id="tablaMisCitas"></tbody></table></div></div>
+</div>
+</div>
+<div id="modalReserva" class="modal-bg" onclick="if(event.target===this) closeModalCli()"><div class="modal"><h3 id="resServNombre"></h3><p class="small" id="resServPrecio"></p><input id="resFecha" type="date"><input id="resHora" type="time" value="10:00"><button class="btn btn-pink full" onclick="confirmarReserva()">Confirmar Reserva</button></div></div>
 <script>
 const firebaseConfig = { apiKey: "AIzaSyCGSVHmsq_kssWtE7TyEIyVfH_KQI8xjeI", authDomain: "bella-c0a0d.firebaseapp.com", projectId: "bella-c0a0d" };
 if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const servicios = [{nombre:'Acrílicas con Diseño', precio:110, tiempo:'90 min', emoji:'💅'},{nombre:'Lashes Volumen', precio:130, tiempo:'120 min', emoji:'👁️'},{nombre:'Gel Semi + Deco', precio:70, tiempo:'60 min', emoji:'✨'},{nombre:'Acrílicas + Lashes Combo', precio:200, tiempo:'180 min', emoji:'💖'},{nombre:'Retoque Acrílicas', precio:65, tiempo:'60 min', emoji:'🔄'},{nombre:'Lifting + Tinte', precio:80, tiempo:'60 min', emoji:'👀'},];
+const servicios = [
+ {nombre:'Acrílicas con Diseño', precio:110, tiempo:'90 min', emoji:'💅'},
+ {nombre:'Lashes Volumen', precio:130, tiempo:'120 min', emoji:'👁️'},
+ {nombre:'Gel Semi + Deco', precio:70, tiempo:'60 min', emoji:'✨'},
+ {nombre:'Acrílicas + Lashes Combo', precio:200, tiempo:'180 min', emoji:'💖'},
+ {nombre:'Retoque Acrílicas', precio:65, tiempo:'60 min', emoji:'🔄'},
+ {nombre:'Lifting + Tinte', precio:80, tiempo:'60 min', emoji:'👀'},
+];
 let selectedServ=null;
-function showViewCli(name){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));document.getElementById('view-'+name).classList.add('active');document.getElementById('nav-'+name)?.classList.add('active');renderCli();}
-function openReserva(i){selectedServ=servicios[i];document.getElementById('resServNombre').innerText=selectedServ.emoji+' '+selectedServ.nombre;document.getElementById('resServPrecio').innerText='S/ '+selectedServ.precio+' - '+selectedServ.tiempo;document.getElementById('resFecha').valueAsDate=new Date();document.getElementById('modalReserva').classList.add('show');}
+function showViewCli(name){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active')); document.getElementById('view-'+name).classList.add('active'); document.getElementById('nav-'+name).classList.add('active'); }
+function openReserva(i){ selectedServ=servicios[i]; document.getElementById('resServNombre').innerText=selectedServ.emoji+' '+selectedServ.nombre; document.getElementById('resServPrecio').innerText='S/ '+selectedServ.precio+' - '+selectedServ.tiempo; document.getElementById('resFecha').valueAsDate=new Date(); document.getElementById('modalReserva').classList.add('show'); }
 function closeModalCli(){document.getElementById('modalReserva').classList.remove('show')}
-async function confirmarReserva(){const fecha=document.getElementById('resFecha').value,hora=document.getElementById('resHora').value;if(!fecha||!hora)return alert('Elige fecha y hora');const email=(localStorage.getItem('userEmail')||'').toLowerCase().trim();const nombre=localStorage.getItem('userName');await db.collection('citas').add({hora,clienta:nombre,servicio:selectedServ.nombre,precio:selectedServ.precio,estado:'Pendiente',fecha,email});closeModalCli();alert('¡Reserva guardada! 💖');showViewCli('mis');}
-async function renderCli(){const email=(localStorage.getItem('userEmail')||'').toLowerCase().trim();const nombre=localStorage.getItem('userName')||'Clienta';if(!email){window.location.href='index.html';return;}document.getElementById('nombreCli').innerText=nombre;document.getElementById('clientaInfo').innerHTML=`<b>${nombre}</b><br><span style="opacity:.7;font-size:11px">${email}</span>`;const sl=document.getElementById('serviciosList');sl.innerHTML='';servicios.forEach((s,i)=>{sl.innerHTML+=`<div class="card serv-card" onclick="openReserva(${i})"><div style="font-size:28px">${s.emoji}</div><h4 style="margin:8px 0">${s.nombre}</h4><div class="small">${s.tiempo}</div><div class="pink" style="font-weight:800;margin-top:6px">S/ ${s.precio}</div><button class="btn btn-pink full" style="margin-top:10px">Reservar</button></div>`;});try{const misSnap=await db.collection('citas').where('email','==',email).get();const tm=document.getElementById('tablaMisCitas');tm.innerHTML='';document.getElementById('misCount').innerText=misSnap.size;if(misSnap.empty){tm.innerHTML='<tr><td colspan="5">Aún no tienes citas</td></tr>';document.getElementById('nextCita').innerText='No tienes citas aún';document.getElementById('nextDet').innerText='¡Reserva tu primera cita! 💖';}else{let citas=[];misSnap.forEach(doc=>citas.push(doc.data()));citas.sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));citas.forEach(c=>{tm.innerHTML+=`<tr><td>${c.fecha}</td><td>${c.hora}</td><td><span class="badge badge-pink">${c.servicio}</span></td><td>S/ ${c.precio}</td><td><span class="badge ${c.estado==='Atendida'?'badge-green':'badge-cyan'}">${c.estado}</span></td></tr>`;});const prox=citas[citas.length-1];document.getElementById('nextCita').innerText=prox.servicio+' - '+prox.fecha;document.getElementById('nextDet').innerText=prox.hora+' - '+prox.estado;}}catch(e){console.error(e);}try{const confDoc=await db.collection('config').doc('puntos').get();const mult=confDoc.exists?confDoc.data().valor:10;document.getElementById('puntosInfo').innerText=`S/1 = ${mult} pts`;db.collection('clientes').doc(email).onSnapshot(doc=>{if(doc.exists){document.getElementById('puntosCli').innerText=(doc.data().puntos||0)+' pts';}else{document.getElementById('puntosCli').innerText='0 pts';}});}catch(e){console.error(e);}}renderCli();
-</script></body></html>
+async function confirmarReserva(){
+ const fecha=document.getElementById('resFecha').value, hora=document.getElementById('resHora').value;
+ if(!fecha||!hora) return alert('Elige fecha y hora');
+ const email=localStorage.getItem('userEmail'), nombre=localStorage.getItem('userName');
+ await db.collection('citas').add({hora, clienta:nombre, servicio:selectedServ.nombre, precio:selectedServ.precio, estado:'Pendiente', fecha, email: email.toLowerCase()});
+ closeModalCli();
+ alert(`¡Reserva guardada! 💖`);
+ showViewCli('mis');
+}
+async function renderCli(){
+ const email=localStorage.getItem('userEmail');
+ const nombre=localStorage.getItem('userName');
+ if(!email){ document.getElementById('nombreCli').innerText='Clienta'; }
+ document.getElementById('nombreCli').innerText=nombre || 'Clienta';
+ document.getElementById('clientaInfo').innerHTML=`<b>${nombre}</b><br><span style="opacity:.7;font-size:11px">${email}</span>`;
+ const sl=document.getElementById('serviciosList'); sl.innerHTML='';
+ servicios.forEach((s,i)=>{ sl.innerHTML+=`<div class="card serv-card" onclick="openReserva(${i})"><div style="font-size:28px">${s.emoji}</div><h4 style="margin:8px 0">${s.nombre}</h4><div class="small">${s.tiempo}</div><div class="pink" style="font-weight:800;margin-top:6px">S/ ${s.precio}</div><button class="btn btn-pink full" style="margin-top:10px">Reservar</button></div>`; });
+ try {
+   const misSnap = await db.collection('citas').where('email','==',email.toLowerCase()).get();
+   const tm=document.getElementById('tablaMisCitas'); tm.innerHTML='';
+   document.getElementById('misCount').innerText=misSnap.size;
+   if(misSnap.empty){
+     tm.innerHTML='<tr><td colspan="5">Aún no tienes citas</td></tr>';
+     document.getElementById('nextCita').innerText='No tienes citas aún';
+     document.getElementById('nextDet').innerText='¡Reserva tu primera cita! 💖';
+   } else{
+     let citas = []; misSnap.forEach(doc=> citas.push(doc.data())); citas.sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+     citas.forEach(c=>{ tm.innerHTML+=`<tr><td>${c.fecha}</td><td>${c.hora}</td><td><span class="badge badge-pink">${c.servicio}</span></td><td>S/ ${c.precio}</td><td><span class="badge ${c.estado==='Atendida'?'badge-green':'badge-cyan'}">${c.estado}</span></td></tr>`; });
+     const prox = citas[citas.length-1]; document.getElementById('nextCita').innerText=prox.servicio+' - '+prox.fecha; document.getElementById('nextDet').innerText=prox.hora + ' - ' + prox.estado;
+   }
+ } catch(e){ console.error(e); }
+ try{
+   const cliDoc = await db.collection('clientes').doc(email.toLowerCase()).get();
+   document.getElementById('puntosCli').innerText = (cliDoc.exists? (cliDoc.data().puntos||0) : 0) + ' pts';
+   const confDoc = await db.collection('config').doc('puntos').get();
+   const mult = confDoc.exists? confDoc.data().valor : 10;
+   document.getElementById('puntosInfo').innerText = `S/1 = ${mult} pts`;
+ }catch(e){ console.error(e); }
+}
+renderCli();
+</script>
+</body>
+</html>
