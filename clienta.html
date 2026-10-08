@@ -60,16 +60,16 @@ async function confirmarReserva(){
  const email=localStorage.getItem('userEmail'), nombre=localStorage.getItem('userName');
  await db.collection('citas').add({hora, clienta:nombre, servicio:selectedServ.nombre, precio:selectedServ.precio, estado:'Pendiente', fecha, email});
  closeModalCli();
- alert(¡Reserva guardada en Firebase! 💖);
+ alert(`¡Reserva guardada en Firebase! 💖`);
  showViewCli('mis');
 }
 async function renderCli(){
  if(localStorage.getItem('role')!=='clienta') return window.location.href='index.html';
  const email=localStorage.getItem('userEmail'), nombre=localStorage.getItem('userName');
  document.getElementById('nombreCli').innerText=nombre || 'Clienta';
- document.getElementById('clientaInfo').innerHTML=<b>${nombre}</b><br><span style="opacity:.7;font-size:11px">${email}</span>;
+ document.getElementById('clientaInfo').innerHTML=`<b>${nombre}</b><br><span style="opacity:.7;font-size:11px">${email}</span>`;
  const sl=document.getElementById('serviciosList'); sl.innerHTML='';
- servicios.forEach((s,i)=>{ sl.innerHTML+=<div class="card serv-card" onclick="openReserva(${i})"><div style="font-size:28px">${s.emoji}</div><h4 style="margin:8px 0">${s.nombre}</h4><div class="small">${s.tiempo}</div><div class="pink" style="font-weight:800;margin-top:6px">S/ ${s.precio}</div><button class="btn btn-pink full" style="margin-top:10px">Reservar</button></div>; });
+ servicios.forEach((s,i)=>{ sl.innerHTML+=`<div class="card serv-card" onclick="openReserva(${i})"><div style="font-size:28px">${s.emoji}</div><h4 style="margin:8px 0">${s.nombre}</h4><div class="small">${s.tiempo}</div><div class="pink" style="font-weight:800;margin-top:6px">S/ ${s.precio}</div><button class="btn btn-pink full" style="margin-top:10px">Reservar</button></div>`; });
 
  try {
    const misSnap = await db.collection('citas').where('email','==',email).get();
@@ -83,7 +83,7 @@ async function renderCli(){
      let citas = [];
      misSnap.forEach(doc=> citas.push(doc.data()));
      citas.sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
-     citas.forEach(c=>{ tm.innerHTML+=<tr><td>${c.fecha}</td><td>${c.hora}</td><td><span class="badge badge-pink">${c.servicio}</span></td><td>S/ ${c.precio}</td><td><span class="badge ${c.estado==='Atendida'?'badge-green':'badge-cyan'}">${c.estado}</span></td></tr>; });
+     citas.forEach(c=>{ tm.innerHTML+=`<tr><td>${c.fecha}</td><td>${c.hora}</td><td><span class="badge badge-pink">${c.servicio}</span></td><td>S/ ${c.precio}</td><td><span class="badge ${c.estado==='Atendida'?'badge-green':'badge-cyan'}">${c.estado}</span></td></tr>`; });
      const prox = citas[citas.length-1];
      document.getElementById('nextCita').innerText=prox.servicio+' - '+prox.fecha;
      document.getElementById('nextDet').innerText=prox.hora + ' - ' + prox.estado;
@@ -100,7 +100,7 @@ async function renderCli(){
    }
    const confDoc = await db.collection('config').doc('puntos').get();
    const mult = confDoc.exists? confDoc.data().valor : 10;
-   document.getElementById('puntosInfo').innerText = S/1 = ${mult} pts - Canjea en tu próxima cita;
+   document.getElementById('puntosInfo').innerText = `S/1 = ${mult} pts - Canjea en tu próxima cita`;
  }catch(e){ console.error(e); document.getElementById('puntosCli').innerText='Error'; }
 }
 renderCli();
