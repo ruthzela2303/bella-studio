@@ -36,7 +36,14 @@
       <div class="card"><h4>Clientas</h4><h2 class="pink" id="kpi-retoque">0</h2></div>
       <div class="card"><h4>Ticket</h4><h2>S/ 145</h2></div>
     </div>
- 
+    <div class="card" style="margin-top:12px">
+      <h4>Config Puntos</h4>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input id="confPuntos" type="number" value="10" style="width:80px">
+        <button class="btn btn-pink" onclick="savePuntosConf()">Guardar</button>
+      </div>
+      <div class="small" id="confPuntosInfo" style="margin-top:6px">S/1 = 10 pts</div>
+    </div>
   </div>
   <div id="view-citas" class="view"><div class="header"><h2>📅 Citas</h2><button class="btn btn-cyan" onclick="openModal('modalCita')">+ Nueva Cita</button></div><div class="card"><table><thead><tr><th>Hora</th><th>Clienta</th><th>Servicio</th><th>Precio</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="tablaCitas"></tbody></table></div></div>
   <div id="view-clientas" class="view"><div class="header"><h2>👩 Clientas (Firebase)</h2><button class="btn btn-pink" onclick="openModal('modalClienta')">+ Nueva Clienta</button></div><div class="card"><table><thead><tr><th>Nombre</th><th>Email</th><th>Puntos</th><th>WhatsApp</th><th>Editar Pts</th></tr></thead><tbody id="tablaClientas"></tbody></table></div></div>
@@ -50,7 +57,7 @@
 const firebaseConfig = { apiKey: "AIzaSyCGSVHmsq_kssWtE7TyEIyVfH_KQI8xjeI", authDomain: "bella-c0a0d.firebaseapp.com", projectId: "bella-c0a0d" };
 if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-function showView(n){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('view-'+n).classList.add('active');renderAll();}
+function showView(n){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));document.getElementById('view-'+n).classList.add('active');document.getElementById('nav-'+n)?.classList.add('active');}
 function openModal(id){document.getElementById(id).classList.add('show')}
 function closeModal(id){document.getElementById(id).classList.remove('show')}
 async function savePuntosConf(){const v=parseInt(document.getElementById('confPuntos').value);if(isNaN(v)||v<=0)return alert('No válido');await db.collection('config').doc('puntos').set({valor:v},{merge:true});alert('Guardado');renderAll();}
@@ -59,7 +66,29 @@ async function addCita(){const h=document.getElementById('citaHora').value,cli=d
 async function addClientaDuena(){const n=document.getElementById('newCliNombre').value.trim(),e=document.getElementById('newCliEmail').value.trim().toLowerCase();if(!n||!e.includes('@'))return alert('Datos mal');await db.collection('clientes').doc(e).set({nombre:n,email:e,puntos:0,creado:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});closeModal('modalClienta');renderAll();}
 async function addProd(){const n=document.getElementById('prodNombre').value.trim(),c=parseInt(document.getElementById('prodCant').value),m=parseInt(document.getElementById('prodMin').value)||5;if(!n||isNaN(c))return alert('Falta');await db.collection('inventario').add({nombre:n,cant:c,min:m});closeModal('modalProd');renderAll();}
 async function atenderCita(id){const confDoc=await db.collection('config').doc('puntos').get();const mult=confDoc.exists?confDoc.data().valor:10;const citaDoc=await db.collection('citas').doc(id).get();const cita=citaDoc.data();await db.collection('citas').doc(id).set({estado:'Atendida'},{merge:true});const q=await db.collection('clientes').where('nombre','==',cita.clienta).get();q.forEach(async d=>{await db.collection('clientes').doc(d.id).set({puntos:firebase.firestore.FieldValue.increment(cita.precio*mult)},{merge:true});});alert('Atendida +'+(cita.precio*mult)+' pts');renderAll();}
-async function renderAll(){let conf=10;try{const c=await db.collection('config').doc('puntos').get();conf=c.exists?c.data().valor:10;}catch(e){}document.getElementById('confPuntos').value=conf;document.getElementById('confPuntosInfo').innerText=`S/1 = ${conf} pts`;try{const s=await db.collection('citas').get();const tc=document.getElementById('tablaCitas');tc.innerHTML='';let total=0,pend=0,ate=0;s.forEach(doc=>{const c=doc.data();if(c.estado==='Atendida')total+=c.precio||0;if(c.estado==='Pendiente')pend++;else ate++;tc.innerHTML+=`<tr><td>${c.hora||''}</td><td>${c.clienta||''}</td><td>${c.servicio||''}</td><td>S/ ${c.precio||0}</td><td>${c.estado}</td><td>${c.estado==='Pendiente'?`<button class="btn" onclick="atenderCita('${doc.id}')">✔ Atender</button>`:''}</td></tr>`;});document.getElementById('kpi-ingresos').innerText='S/ '+total;document.getElementById('totalHoy').innerText='S/ '+total;document.getElementById('kpi-citas').innerText=s.size;document.getElementById('kpi-citas-det').innerText=pend+' pend / '+ate+' atend';}catch(e){}try{const s=await db.collection('clientes').get();const t=document.getElementById('tablaClientas');t.innerHTML='';document.getElementById('kpi-retoque').innerText=s.size;s.forEach(doc=>{const u=doc.data();const em=(u.email||doc.id).toLowerCase();t.innerHTML+=`<tr><td>${u.nombre||''}</td><td>${u.email||doc.id}</td><td><b>${u.puntos||0}</b></td><td><a href="https://wa.me/51?text=Hola ${u.nombre}" target="_blank">WA</a></td><td><button class="btn" onclick="editarPuntos('${em}','${u.nombre}',${u.puntos||0})">✏️</button></td></tr>`;});}catch(e){}try{const s=await db.collection('inventario').get();const ti=document.getElementById('tablaInvent');ti.innerHTML='';s.forEach(doc=>{const p=doc.data();ti.innerHTML+=`<tr><td>${p.nombre}</td><td>${p.cant}</td><td>${p.min}</td><td>${p.cant<=p.min?'BAJO':'OK'}</td></tr>`;});}catch(e){}}
+async function renderAll(){
+  let conf=10;
+  try{const c=await db.collection('config').doc('puntos').get();conf=c.exists?c.data().valor:10;}catch(e){}
+  const confInput=document.getElementById('confPuntos');
+  if(confInput) confInput.value=conf;
+  const confInfo=document.getElementById('confPuntosInfo');
+  if(confInfo) confInfo.innerText=`S/1 = ${conf} pts`;
+  try{
+    const s=await db.collection('citas').get();
+    const tc=document.getElementById('tablaCitas');
+    if(tc){tc.innerHTML='';let total=0,pend=0,ate=0;s.forEach(doc=>{const c=doc.data();if(c.estado==='Atendida')total+=c.precio||0;if(c.estado==='Pendiente')pend++;else ate++;tc.innerHTML+=`<tr><td>${c.hora||''}</td><td>${c.clienta||''}</td><td>${c.servicio||''}</td><td>S/ ${c.precio||0}</td><td>${c.estado}</td><td>${c.estado==='Pendiente'?`<button class="btn" onclick="atenderCita('${doc.id}')">✔ Atender</button>`:''}</td></tr>`;});document.getElementById('kpi-ingresos').innerText='S/ '+total;document.getElementById('totalHoy').innerText='S/ '+total;document.getElementById('kpi-citas').innerText=s.size;document.getElementById('kpi-citas-det').innerText=pend+' pend / '+ate+' atend';}
+  }catch(e){console.error(e)}
+  try{
+    const s=await db.collection('clientes').get();
+    const t=document.getElementById('tablaClientas');
+    if(t){t.innerHTML='';document.getElementById('kpi-retoque').innerText=s.size;s.forEach(doc=>{const u=doc.data();const em=(u.email||doc.id).toLowerCase();t.innerHTML+=`<tr><td>${u.nombre||''}</td><td>${u.email||doc.id}</td><td><b>${u.puntos||0}</b></td><td><a href="https://wa.me/51?text=Hola ${u.nombre}" target="_blank">WA</a></td><td><button class="btn" onclick="editarPuntos('${em}','${u.nombre}',${u.puntos||0})">✏️</button></td></tr>`;});}
+  }catch(e){console.error(e)}
+  try{
+    const s=await db.collection('inventario').get();
+    const ti=document.getElementById('tablaInvent');
+    if(ti){ti.innerHTML='';s.forEach(doc=>{const p=doc.data();ti.innerHTML+=`<tr><td>${p.nombre}</td><td>${p.cant}</td><td>${p.min}</td><td>${p.cant<=p.min?'BAJO':'OK'}</td></tr>`;});}
+  }catch(e){console.error(e)}
+}
 renderAll();
 </script>
 </body>
